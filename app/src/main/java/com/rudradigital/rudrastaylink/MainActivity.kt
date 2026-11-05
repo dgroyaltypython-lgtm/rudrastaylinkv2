@@ -779,7 +779,7 @@ private fun MoreScreen(
                 Icon(Icons.Default.Logout, null, tint = RedSoft); Spacer(Modifier.width(8.dp)); Text("Sign out", color = RedSoft, fontWeight = FontWeight.Bold)
             }
         }
-        item { Text("Rudra StayLink · Owner app v1.0.0", color = TextMuted, fontSize = 10.sp, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
+        item { Text("Rudra StayLink · Owner app v1.0.3", color = TextMuted, fontSize = 10.sp, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
     }
 }
 

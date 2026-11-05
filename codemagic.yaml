@@ -54,6 +54,8 @@ workflows:
           chmod +x ./gradlew
           ./gradlew --version
           set -o pipefail
+          echo "=== Compose runtime dependency selected by Gradle ==="
+          ./gradlew --no-daemon :app:dependencyInsight --dependency androidx.compose.runtime:runtime-saveable --configuration debugRuntimeClasspath 2>&1 | tee "$CM_BUILD_DIR/compose-dependency-debug.log"
           ./gradlew --no-daemon --stacktrace --info clean assembleDebug 2>&1 | tee "$CM_BUILD_DIR/gradle-debug-build.log"
 
           echo "=== APK output ==="
@@ -61,6 +63,7 @@ workflows:
     artifacts:
       - "**/app/build/outputs/apk/debug/*.apk"
       - "gradle-debug-build.log"
+      - "compose-dependency-debug.log"
       - "**/app/build/reports/**"
 
   rudra-staylink-android-release:
@@ -118,10 +121,13 @@ workflows:
           chmod +x ./gradlew
           ./gradlew --version
           set -o pipefail
+          echo "=== Compose runtime dependency selected by Gradle ==="
+          ./gradlew --no-daemon :app:dependencyInsight --dependency androidx.compose.runtime:runtime-saveable --configuration releaseRuntimeClasspath 2>&1 | tee "$CM_BUILD_DIR/compose-dependency-release.log"
           ./gradlew --no-daemon --stacktrace --info clean assembleRelease 2>&1 | tee "$CM_BUILD_DIR/gradle-release-build.log"
           echo "=== APK output ==="
           ls -lh app/build/outputs/apk/release/*.apk
     artifacts:
       - "**/app/build/outputs/apk/release/*.apk"
       - "gradle-release-build.log"
+      - "compose-dependency-release.log"
       - "**/app/build/reports/**"

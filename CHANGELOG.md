@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3
+- Pinned Jetpack Compose BOM to `2026.06.01` (Compose 1.11.4) to avoid Compose 1.12.1 AAR metadata requirements for API 37 / AGP 9.1 while retaining AGP 8.13.2 and compileSdk 36.
+- Added Gradle dependencyInsight diagnostics to both Codemagic workflows and retained dependency reports as artifacts.
+- Incremented Android versionCode to 3 and versionName to 1.0.3.
+
+# Changelog
+
 ## 1.0.2
 - Fixed Codemagic Gradle configuration failure with Kotlin Gradle Plugin 2.3.21 by migrating the deprecated `kotlinOptions` block to `kotlin.compilerOptions`.
 - Configured JVM bytecode target 17 with typed `JvmTarget.JVM_17` and moved `kotlin.RequiresOptIn` to `compilerOptions.optIn`.

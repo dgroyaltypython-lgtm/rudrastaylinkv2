@@ -26,7 +26,7 @@
 - Android Gradle Plugin: **8.13.2**.
 - Gradle: **8.13**.
 - Kotlin: **2.3.21**.
-- Jetpack Compose BOM: **2026.09.00**.
+- Jetpack Compose BOM: **2026.06.01** (Compose 1.11.4; compatible with compileSdk 36 / AGP 8.13.2).
 
 A custom `gradlew` / `gradlew.bat` bootstrap downloads Gradle 8.13 when it is not already present. It avoids requiring a separately installed global Gradle command. Android SDK 36 and platform build tools must still be installed (Android Studio's SDK Manager can install them).
 
@@ -141,3 +141,10 @@ For a debug build, no release keystore is required. Configure the `rudra-staylin
 
 This release uses the modern `kotlin { compilerOptions { ... } }` DSL. It intentionally does not use the legacy `kotlinOptions {}` block, because Kotlin Gradle Plugin 2.3.21 rejects that deprecated configuration during Gradle build-script compilation. JVM bytecode remains targeted at Java 17, and `kotlin.RequiresOptIn` is configured through `compilerOptions.optIn`.
 
+
+
+## Compose / Android Gradle Plugin compatibility (v1.0.3)
+
+The app pins Compose BOM `2026.06.01`, which selects the Compose 1.11.4 line. Do not change this to BOM `2026.08.00` or `2026.09.00` while keeping AGP 8.13.2 and `compileSdk = 36`: Compose 1.12 requires API 37 and AGP 9.1.1 or newer. This project deliberately keeps AGP 8.13.2, Gradle 8.13, JDK 17 and SDK 36 together for the current Codemagic workflow.
+
+The Codemagic workflows now run Gradle `dependencyInsight` for `androidx.compose.runtime:runtime-saveable` before compilation and preserve the output as an artifact. Check that it resolves to Compose `1.11.4` if a later dependency update causes another AAR metadata failure.
