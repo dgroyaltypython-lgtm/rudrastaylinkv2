@@ -1,0 +1,127 @@
+workflows:
+  rudra-staylink-android-debug:
+    name: Rudra StayLink - Android Debug APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      java: 17
+      vars:
+        PACKAGE_NAME: "com.rudradigital.rudrastaylink"
+    scripts:
+      - name: Build debug APK
+        script: |
+          set -Eeuo pipefail
+          echo "=== Codemagic build diagnostics ==="
+          echo "CM_BUILD_DIR=${CM_BUILD_DIR:-not-set}"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-not-set}"
+          echo "Java version:"
+          java -version
+          echo "Repository root contents:"
+          ls -la "$CM_BUILD_DIR"
+
+          PROJECT_DIR="$CM_BUILD_DIR"
+          if [ ! -f "$PROJECT_DIR/gradlew" ] || [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+            echo "Gradle project not at repository root; searching nested folders..."
+            SETTINGS_FILE="$(find "$CM_BUILD_DIR" -maxdepth 5 -type f -name 'settings.gradle.kts' -print -quit || true)"
+            if [ -z "$SETTINGS_FILE" ]; then
+              SETTINGS_FILE="$(find "$CM_BUILD_DIR" -maxdepth 5 -type f -name 'settings.gradle' -print -quit || true)"
+            fi
+            if [ -z "$SETTINGS_FILE" ]; then
+              echo "ERROR: Could not find settings.gradle(.kts) under CM_BUILD_DIR."
+              find "$CM_BUILD_DIR" -maxdepth 5 -type f | sort | head -200
+              exit 1
+            fi
+            PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
+          fi
+
+          if [ ! -f "$PROJECT_DIR/gradlew" ]; then
+            echo "ERROR: Gradle settings found at $PROJECT_DIR but gradlew is missing."
+            ls -la "$PROJECT_DIR"
+            exit 1
+          fi
+
+          echo "Using Android project directory: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          if [ -n "${ANDROID_SDK_ROOT:-}" ]; then
+            printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT" > local.properties
+          elif [ -n "${ANDROID_HOME:-}" ]; then
+            printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+          else
+            echo "ERROR: Android SDK location not provided by Codemagic."
+            exit 1
+          fi
+
+          chmod +x ./gradlew
+          ./gradlew --version
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace --info clean assembleDebug 2>&1 | tee "$CM_BUILD_DIR/gradle-debug-build.log"
+
+          echo "=== APK output ==="
+          ls -lh app/build/outputs/apk/debug/*.apk
+    artifacts:
+      - "**/app/build/outputs/apk/debug/*.apk"
+      - "gradle-debug-build.log"
+      - "**/app/build/reports/**"
+
+  rudra-staylink-android-release:
+    name: Rudra StayLink - Signed Release APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      java: 17
+      android_signing:
+        - rudra_staylink_keystore
+      vars:
+        PACKAGE_NAME: "com.rudradigital.rudrastaylink"
+    scripts:
+      - name: Build signed release APK
+        script: |
+          set -Eeuo pipefail
+          echo "=== Codemagic release build diagnostics ==="
+          echo "CM_BUILD_DIR=${CM_BUILD_DIR:-not-set}"
+          echo "Java version:"
+          java -version
+          PROJECT_DIR="$CM_BUILD_DIR"
+          if [ ! -f "$PROJECT_DIR/gradlew" ] || [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+            SETTINGS_FILE="$(find "$CM_BUILD_DIR" -maxdepth 5 -type f -name 'settings.gradle.kts' -print -quit || true)"
+            if [ -z "$SETTINGS_FILE" ]; then
+              SETTINGS_FILE="$(find "$CM_BUILD_DIR" -maxdepth 5 -type f -name 'settings.gradle' -print -quit || true)"
+            fi
+            if [ -z "$SETTINGS_FILE" ]; then
+              echo "ERROR: Could not find Android Gradle project under CM_BUILD_DIR."
+              find "$CM_BUILD_DIR" -maxdepth 5 -type f | sort | head -200
+              exit 1
+            fi
+            PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
+          fi
+          if [ ! -f "$PROJECT_DIR/gradlew" ]; then
+            echo "ERROR: Gradle wrapper missing from $PROJECT_DIR"
+            ls -la "$PROJECT_DIR"
+            exit 1
+          fi
+          cd "$PROJECT_DIR"
+          if [ -n "${ANDROID_SDK_ROOT:-}" ]; then
+            printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT" > local.properties
+          elif [ -n "${ANDROID_HOME:-}" ]; then
+            printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+          else
+            echo "ERROR: Android SDK location not provided by Codemagic."
+            exit 1
+          fi
+
+          test -n "${CM_KEYSTORE_PATH:-}" || (echo "Upload a keystore named rudra_staylink_keystore in Codemagic Code signing identities." && exit 1)
+          test -f "$CM_KEYSTORE_PATH" || (echo "Codemagic keystore file was not found: $CM_KEYSTORE_PATH" && exit 1)
+          test -n "${CM_KEY_ALIAS:-}" || (echo "Codemagic signing key alias is missing." && exit 1)
+          test -n "${CM_KEY_PASSWORD:-}" || (echo "Codemagic signing key password is missing." && exit 1)
+          test -n "${CM_KEYSTORE_PASSWORD:-}" || (echo "Codemagic keystore password is missing." && exit 1)
+
+          chmod +x ./gradlew
+          ./gradlew --version
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace --info clean assembleRelease 2>&1 | tee "$CM_BUILD_DIR/gradle-release-build.log"
+          echo "=== APK output ==="
+          ls -lh app/build/outputs/apk/release/*.apk
+    artifacts:
+      - "**/app/build/outputs/apk/release/*.apk"
+      - "gradle-release-build.log"
+      - "**/app/build/reports/**"

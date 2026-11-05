@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.RudraStayLink" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#62D9C4</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#071521</item>
+        <item name="android:navigationBarColor">#071521</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#071521</item>
+    </style>
+</resources>
